@@ -82,12 +82,15 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return self.value(gameState, 0, 0)[1]
 
     def value(self, game_state, depth, agent_index):
-        if not game_state.getLegalActions(agent_index) or depth == self.depth:
+        if not game_state.getLegalActions(
+                agent_index) or depth == self.depth or game_state.isWin() or game_state.isLose():
             return [self.evaluationFunction(game_state), 0]
 
+        # If the agent is the last ghost, increment the depth and set the next agent to pacman
         if agent_index == game_state.getNumAgents() - 1:
             depth += 1
             next_agent_index = 0
+        # Otherwise, set the next agent to the next ghost
         else:
             next_agent_index = agent_index + 1
 
@@ -100,10 +103,11 @@ class MinimaxAgent(MultiAgentSearchAgent):
         v = float("-inf")
         best_action = Directions.STOP
         for action in game_state.getLegalActions(agent_index):
+            previous_v = v
             next_game_state = game_state.generateSuccessor(agent_index, action)
             new_value = self.value(next_game_state, depth, next_agent_index)[0]
-            if new_value > v:
-                v = new_value
+            v = max(v, new_value)
+            if previous_v != v:
                 best_action = action
         return [v, best_action]
 
@@ -111,10 +115,11 @@ class MinimaxAgent(MultiAgentSearchAgent):
         v = float("inf")
         best_action = Directions.STOP
         for action in game_state.getLegalActions(agent_index):
+            previous_v = v
             next_game_state = game_state.generateSuccessor(agent_index, action)
             new_value = self.value(next_game_state, depth, next_agent_index)[0]
-            if new_value < v:
-                v = new_value
+            v = min(v, new_value)
+            if previous_v != v:
                 best_action = action
         return [v, best_action]
 
