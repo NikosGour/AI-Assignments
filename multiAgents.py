@@ -12,11 +12,10 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
-from util import manhattanDistance
-from game import Directions
-import random, util
-
+import math
+import util
 from game import Agent
+from game import Directions
 
 
 def scoreEvaluationFunction(currentGameState):
@@ -100,7 +99,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return self.min_value(game_state, depth, agent_index, next_agent_index)
 
     def max_value(self, game_state, depth, agent_index, next_agent_index):
-        v = float("-inf")
+        v = -math.inf
         best_action = Directions.STOP
         for action in game_state.getLegalActions(agent_index):
             previous_v = v
@@ -112,7 +111,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return [v, best_action]
 
     def min_value(self, game_state, depth, agent_index, next_agent_index):
-        v = float("inf")
+        v = math.inf
         best_action = Directions.STOP
         for action in game_state.getLegalActions(agent_index):
             previous_v = v
@@ -133,8 +132,56 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        return self.value(gameState, 0, 0, -math.inf, math.inf)[1]
+
+    def value(self, game_state, depth, agent_index, alpha, beta):
+        if not game_state.getLegalActions(
+                agent_index) or depth == self.depth or game_state.isWin() or game_state.isLose():
+            return [self.evaluationFunction(game_state), 0]
+
+        # If the agent is the last ghost, increment the depth and set the next agent to pacman
+        if agent_index == game_state.getNumAgents() - 1:
+            depth += 1
+            next_agent_index = 0
+        # Otherwise, set the next agent to the next ghost
+        else:
+            next_agent_index = agent_index + 1
+
+        if agent_index == 0:
+            return self.max_value(game_state, depth, agent_index, next_agent_index, alpha, beta)
+        else:
+            return self.min_value(game_state, depth, agent_index, next_agent_index, alpha, beta)
+
+    def max_value(self, game_state, depth, agent_index, next_agent_index, alpha, beta):
+        v = -math.inf
+        best_action = Directions.STOP
+        for action in game_state.getLegalActions(agent_index):
+            previous_v = v
+            next_game_state = game_state.generateSuccessor(agent_index, action)
+            new_value = self.value(next_game_state, depth, next_agent_index, alpha, beta)[0]
+            v = max(v, new_value)
+            if v > beta: return [v, best_action]
+
+            alpha = max(alpha, v)
+            if previous_v != v:
+                best_action = action
+        return [v, best_action]
+
+    def min_value(self, game_state, depth, agent_index, next_agent_index, alpha, beta):
+        v = math.inf
+        best_action = Directions.STOP
+        for action in game_state.getLegalActions(agent_index):
+            previous_v = v
+            next_game_state = game_state.generateSuccessor(agent_index, action)
+            new_value = self.value(next_game_state, depth, next_agent_index, alpha, beta)[0]
+            v = min(v, new_value)
+            if v < alpha: return [v, best_action]
+
+            beta = min(beta, v)
+            if previous_v != v:
+                best_action = action
+        return [v, best_action]
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
@@ -149,8 +196,53 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         All ghosts should be modeled as choosing uniformly at random from their
         legal moves.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.value(gameState, 0, 0)[1]
+
+    def value(self, game_state, depth, agent_index):
+        if not game_state.getLegalActions(
+                agent_index) or depth == self.depth or game_state.isWin() or game_state.isLose():
+            return [self.evaluationFunction(game_state), 0]
+
+        # If the agent is the last ghost, increment the depth and set the next agent to pacman
+        if agent_index == game_state.getNumAgents() - 1:
+            depth += 1
+            next_agent_index = 0
+        # Otherwise, set the next agent to the next ghost
+        else:
+            next_agent_index = agent_index + 1
+
+        if agent_index == 0:
+            return self.max_value(game_state, depth, agent_index, next_agent_index)
+        else:
+            return self.exp_value(game_state, depth, agent_index, next_agent_index)
+
+    def max_value(self, game_state, depth, agent_index, next_agent_index):
+        v = -math.inf
+        best_action = Directions.STOP
+        for action in game_state.getLegalActions(agent_index):
+            previous_v = v
+            next_game_state = game_state.generateSuccessor(agent_index, action)
+            new_value = self.value(next_game_state, depth, next_agent_index)[0]
+            v = max(v, new_value)
+            if previous_v != v:
+                best_action = action
+        return [v, best_action]
+
+    def exp_value(self, game_state, depth, agent_index, next_agent_index):
+        v = 0
+        best_action = Directions.STOP
+        for action in game_state.getLegalActions(agent_index):
+            previous_v = v
+            next_game_state = game_state.generateSuccessor(agent_index, action)
+            new_value = self.value(next_game_state, depth, next_agent_index)[0]
+            prob = self.probability(game_state, agent_index)
+            v += prob * new_value
+            if previous_v != v:
+                best_action = action
+        return [v, best_action]
+
+    def probability(self, game_state, agent_index):
+        return 1.0 / len(game_state.getLegalActions(agent_index))
 
 
 def betterEvaluationFunction(currentGameState):
@@ -160,8 +252,7 @@ def betterEvaluationFunction(currentGameState):
 
     DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return 0
 
 
 # Abbreviation
