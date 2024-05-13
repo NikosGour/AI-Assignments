@@ -94,6 +94,7 @@ def depthFirstSearch(problem):
     # print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     # print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     stack.push((problem.getStartState(), []))
+    print(f"Tree node: {problem.getStartState()}")
     while not stack.isEmpty():
         cur_cell, concat_path = stack.pop()
         if problem.isGoalState(cur_cell):

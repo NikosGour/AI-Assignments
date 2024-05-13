@@ -254,30 +254,44 @@ def betterEvaluationFunction(current_game_state):
     DESCRIPTION: <write something here so we know what you did>
     """
     food_list = current_game_state.getFood().asList()
-    scare_orbs = current_game_state.getCapsules()
     ghost_states = current_game_state.getGhostStates()
     # print(ghost_states[0])
     # print(ghost_states[0].scaredTimer)
     score = 0
 
+    # score will be the same as previous state score
+    score += current_game_state.getScore()
+    # each food pellet counts for 20 "points"
+    # if less exist on the board then the score will be higher
+    # I'm doing it this way because it's difficult to detect when pacman eats
+    # a pellet and give positive "points" then
     score -= len(food_list) * 20
-    score -= len(scare_orbs) * 45
+    # each big pellet/capsule/scare pellet counts for 45
+    score -= len(current_game_state.getCapsules()) * 45
 
+    # split ghost to harmful (if they can kill pacman) and not harmful (if they can't)
     harmful_ghosts = [x for x in ghost_states if x.scaredTimer > 0]
     not_harmful_ghosts = [x for x in ghost_states if x not in harmful_ghosts]
 
+    # memoize pacman position
     pacmman_pos = current_game_state.getPacmanPosition()
     # print(pacmman_pos)
     # print([x.getPosition() for x in not_harmful_ghosts])
+
+    # Get distances between every ghost and pacman
     harmful_ghosts_dist = [mazeDistance(pacmman_pos, position_float_to_int(x.getPosition()), current_game_state) for x
                            in harmful_ghosts]
     not_harmful_ghosts_dist = [mazeDistance(pacmman_pos, position_float_to_int(x.getPosition()), current_game_state) for
                                x in
                                not_harmful_ghosts]
+
+    # if ghost is close then give negative "points"
+    # the closer the ghost the more negative "points" received
     for harmful_dist in harmful_ghosts_dist:
         if harmful_dist < 5:
             score -= 30 * (5 - harmful_dist)
-
+    # if vulnerable ghost is close then give positive "points"
+    # here I have two "sections" just to have different weight based on distance
     for scared_dist in not_harmful_ghosts_dist:
         if scared_dist < 3:
             score += 30 * (3 - scared_dist)
@@ -286,13 +300,6 @@ def betterEvaluationFunction(current_game_state):
         else:
             score += 5
 
-    # foods_dist = [mazeDistance(pacmman_pos, food_pos, current_game_state) for food_pos in food_list]
-
-    # for food_dist in foods_dist:
-    #     if food_dist < 3:
-    #         score += 10
-    #     elif food_dist < 6:
-    #         score += 5
     return score
 
 
