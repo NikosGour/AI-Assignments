@@ -16,6 +16,7 @@ import math
 import util
 from game import Agent
 from game import Directions
+from searchAgents import mazeDistance
 
 
 def scoreEvaluationFunction(currentGameState):
@@ -245,14 +246,58 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         return 1.0 / len(game_state.getLegalActions(agent_index))
 
 
-def betterEvaluationFunction(currentGameState):
+def betterEvaluationFunction(current_game_state):
     """
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
     DESCRIPTION: <write something here so we know what you did>
     """
-    return 0
+    food_list = current_game_state.getFood().asList()
+    scare_orbs = current_game_state.getCapsules()
+    ghost_states = current_game_state.getGhostStates()
+    # print(ghost_states[0])
+    # print(ghost_states[0].scaredTimer)
+    score = 0
+
+    score -= len(food_list) * 20
+    score -= len(scare_orbs) * 45
+
+    harmful_ghosts = [x for x in ghost_states if x.scaredTimer > 0]
+    not_harmful_ghosts = [x for x in ghost_states if x not in harmful_ghosts]
+
+    pacmman_pos = current_game_state.getPacmanPosition()
+    # print(pacmman_pos)
+    # print([x.getPosition() for x in not_harmful_ghosts])
+    harmful_ghosts_dist = [mazeDistance(pacmman_pos, position_float_to_int(x.getPosition()), current_game_state) for x
+                           in harmful_ghosts]
+    not_harmful_ghosts_dist = [mazeDistance(pacmman_pos, position_float_to_int(x.getPosition()), current_game_state) for
+                               x in
+                               not_harmful_ghosts]
+    for harmful_dist in harmful_ghosts_dist:
+        if harmful_dist < 5:
+            score -= 30 * (5 - harmful_dist)
+
+    for scared_dist in not_harmful_ghosts_dist:
+        if scared_dist < 3:
+            score += 30 * (3 - scared_dist)
+        elif scared_dist < 6:
+            score += 15 * (6 - scared_dist)
+        else:
+            score += 5
+
+    # foods_dist = [mazeDistance(pacmman_pos, food_pos, current_game_state) for food_pos in food_list]
+
+    # for food_dist in foods_dist:
+    #     if food_dist < 3:
+    #         score += 10
+    #     elif food_dist < 6:
+    #         score += 5
+    return score
+
+
+def position_float_to_int(position):
+    return (int(position[0]), int(position[1]))
 
 
 # Abbreviation
