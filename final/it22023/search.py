@@ -108,7 +108,8 @@ def depthFirstSearch(problem):
 
 
 def breadthFirstSearch(problem):
-    """Search the shallowest nodes in the search tree first."""; visited = []
+    """Search the shallowest nodes in the search tree first."""
+    visited = []
     queue = util.Queue()
     queue.push((problem.getStartState(), []))
     while not queue.isEmpty():
